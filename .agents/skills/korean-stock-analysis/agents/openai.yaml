@@ -1,0 +1,12 @@
+# Codex skill presentation/behavior metadata (optional companion to SKILL.md)
+interface:
+  display_name: "국내주식 분석 (TradingAgents-KR)"
+  short_description: "KRX 종목 리서치와 검증 리포트"
+  default_prompt: "Use $korean-stock-analysis to analyze a Korean KRX stock with TradingAgents-KR."
+policy:
+  # Allow Codex to auto-select this skill when a task matches the description.
+  allow_implicit_invocation: true
+dependencies:
+  tools:
+    - shell        # runs analyze_kr_stock.sh / python scripts
+    - web_search   # ticker-code resolution fallback

@@ -1,0 +1,8 @@
+# TradingAgents Korea has no separate pinned-requirements file.
+# All runtime dependencies are declared in pyproject.toml.
+#
+# Install the project and all of its dependencies with:
+#     pip install -e .
+#
+# The line below lets `pip install -r requirements.txt` do the same thing.
+-e .

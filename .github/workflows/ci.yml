@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Run tests
+        # The suite mocks all vendor APIs and the CLI subprocess — no network
+        # access or API keys are required.
+        run: pytest tests/ -q
+
+  install-smoke:
+    name: Install smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package (editable)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Smoke - package is actually installed (llm.txt step 9.1)
+        # Authoritative install check: unlike a bare import from the repo root,
+        # `pip show` cannot be satisfied by the shadowing `tradingagents/` source
+        # directory, so it fails loudly if `pip install -e .` did not complete.
+        run: python -m pip show tradingagents
+
+      - name: Smoke - imports resolve (incl. sibling 'scripts' package)
+        run: python -c "import tradingagents, cli.main; from tradingagents.default_config import DEFAULT_CONFIG; print('provider:', DEFAULT_CONFIG['llm_provider'])"
+
+      - name: Smoke - console script (llm.txt step 9 verification)
+        run: tradingagents --help
+
+      - name: Smoke - module entrypoint
+        run: python -m cli.main --help
+
+  skill-install-smoke:
+    name: Skill one-shot install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Skills are POSIX/bash runners (SKILL.md declares linux/macos).
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint - skill runner scripts parse (bash -n)
+        shell: bash
+        run: |
+          set -euo pipefail
+          n=0
+          while IFS= read -r s; do bash -n "$s"; n=$((n + 1)); done \
+            < <(find .claude .codex .agents .hermes .openclaw -path '*/scripts/*.sh' -type f)
+          echo "bash -n OK on $n skill runner scripts"
+
+      - name: Install all framework skills (one-shot)
+        shell: bash
+        env:
+          HERMES_HOME: ${{ runner.temp }}/hermes
+        run: bash scripts/install-skill.sh all
+
+      - name: Verify installs + repo auto-wire
+        shell: bash
+        env:
+          HERMES_HOME: ${{ runner.temp }}/hermes
+        run: |
+          set -euo pipefail
+          for p in \
+            "$HOME/.claude/skills/korean-stock-analysis" \
+            "$HOME/.codex/skills/korean-stock-analysis" \
+            "$HOME/.agents/skills/korean-stock-analysis" \
+            "$HOME/.openclaw/skills/korean-stock-analysis" \
+            "$HERMES_HOME/skills/finance/korean-stock-analysis"; do
+            test -f "$p/SKILL.md" || { echo "missing SKILL.md: $p"; exit 1; }
+          done
+          grep -qF "repo autowire" \
+            "$HOME/.claude/skills/korean-stock-analysis/scripts/analyze_kr_stock.sh"
+          echo "skill one-shot install verified on ${{ matrix.os }}"

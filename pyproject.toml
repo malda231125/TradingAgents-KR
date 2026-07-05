@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tradingagents"
+version = "0.2.2"
+description = "Korea-market multi-agent LLM equity research framework (KOSPI/KOSDAQ), built on TradingAgents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "malda231125", email = "malda231125@gmail.com" }]
+keywords = ["trading", "llm", "multi-agent", "korea", "kospi", "kosdaq", "kis", "dart", "ecos", "langgraph", "finance", "research"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "langchain-core>=0.3.81",
+    "backtrader>=1.9.78.123",
+    "langchain-anthropic>=0.3.15",
+    "langchain-experimental>=0.3.4",
+    "langchain-google-genai>=2.1.5",
+    "langchain-openai>=0.3.23",
+    "langgraph>=0.4.8",
+    "pandas>=2.3.0",
+    "parsel>=1.10.0",
+    "pytz>=2025.2",
+    "questionary>=2.1.0",
+    "rank-bm25>=0.2.2",
+    "redis>=6.2.0",
+    "requests>=2.32.4",
+    "rich>=14.0.0",
+    "typer>=0.21.0",
+    "setuptools>=80.9.0",
+    "stockstats>=0.6.5",
+    "tqdm>=4.67.1",
+    "typing-extensions>=4.14.0",
+    "yfinance>=0.2.63",
+    "python-telegram-bot>=22.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[project.urls]
+Repository = "https://github.com/malda231125/TradingAgents-KR"
+Issues = "https://github.com/malda231125/TradingAgents-KR/issues"
+"Upstream (TradingAgents)" = "https://github.com/TauricResearch/TradingAgents"
+
+[project.scripts]
+tradingagents = "cli.main:app"
+
+[tool.setuptools.packages.find]
+include = ["tradingagents*", "cli*"]
+
+[tool.setuptools.package-data]
+cli = ["static/*"]
